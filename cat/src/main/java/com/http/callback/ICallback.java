@@ -4,9 +4,9 @@ package com.http.callback;
  * Created by Administrator on 2016/12/11.
  */
 
-public interface ICallback {
+public interface ICallback<T> {
 
-    void onSuccess();
+    void onSuccess(T t);
     void onFailure(Exception e);
 
 }
