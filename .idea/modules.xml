@@ -4,7 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/CatHttp.iml" filepath="$PROJECT_DIR$/CatHttp.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/cat/cat.iml" filepath="$PROJECT_DIR$/cat/cat.iml" />
+      <module fileurl="file://$PROJECT_DIR$/cat2/cat2.iml" filepath="$PROJECT_DIR$/cat2/cat2.iml" />
     </modules>
   </component>
 </project>
