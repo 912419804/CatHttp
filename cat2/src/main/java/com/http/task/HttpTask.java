@@ -3,7 +3,9 @@ package com.http.task;
 import android.os.AsyncTask;
 
 import com.http.bean.Request;
+import com.http.callback.IUpdateProgressListener;
 import com.http.core.HttpUtils;
+import com.http.exception.CatException;
 
 import java.net.HttpURLConnection;
 
@@ -29,8 +31,13 @@ public class HttpTask extends AsyncTask<Void,Integer,Object> {
 
         try {
             HttpURLConnection connection = HttpUtils.execute(mRequest);
-            return mRequest.iCallback.parse(connection);
-        }catch (Exception e){
+            return mRequest.iCallback.parse(connection,new IUpdateProgressListener(){
+                @Override
+                public void updateProgress(int currentLength, int totalLength) {
+                    publishProgress(currentLength,totalLength);
+                }
+            });
+        }catch (CatException e){
             return e;
         }
     }
@@ -38,10 +45,22 @@ public class HttpTask extends AsyncTask<Void,Integer,Object> {
     @Override
     protected void onPostExecute(Object o) {
         super.onPostExecute(o);
-        if (o instanceof Exception){
-            mRequest.iCallback.onFailure((Exception) o);
+        if (o instanceof CatException){
+            if (mRequest.listener !=null){
+                if (!mRequest.listener.handleException((CatException) o)){
+                    mRequest.iCallback.onFailure((CatException) o);
+                }
+            }else {
+                mRequest.iCallback.onFailure((CatException) o);
+            }
         }else {
             mRequest.iCallback.onSuccess(o);
         }
+    }
+
+    @Override
+    protected void onProgressUpdate(Integer... values) {
+        super.onProgressUpdate(values);
+        mRequest.iCallback.updateProgress(values[0],values[1]);
     }
 }
