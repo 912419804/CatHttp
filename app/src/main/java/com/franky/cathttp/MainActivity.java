@@ -12,11 +12,12 @@ import android.widget.TextView;
 
 import com.franky.cathttp.bean.User;
 import com.http.bean.Request;
+import com.http.callback.GlobalExceptionListener;
 import com.http.callback.impl.FileCallback;
 import com.http.callback.impl.JsonCallback;
+import com.http.callback.impl.StringCallback;
 import com.http.exception.CatException;
-import com.http.callback.GlobalExceptionListener;
-import com.http.task.HttpTask;
+import com.http.manager.RequestManager;
 import com.orhanobut.logger.Logger;
 
 import java.io.File;
@@ -49,6 +50,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         initView();
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        RequestManager.getInstance().cancelAllRequest();
+    }
+
     private void initView() {
         et_url = (EditText) findViewById(R.id.et_url);
         tv_content = (TextView) findViewById(R.id.tv_content);
@@ -61,7 +68,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (v.getId()) {
             case R.id.bt_go:
 //                getContent();
-                getContentForDownload();
+//                getContentForDownload();
+                getContentByGet();
                 break;
         }
     }
@@ -88,19 +96,56 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Logger.d(s);
             }
 
+
+
+            @Override
+            public User postRequest(User user) {
+                user.email = "xxxxxxxx";
+                return super.postRequest(user);
+            }
+
             @Override
             public void onFailure(CatException e) {
                 setText(e.getMessage());
             }
         });
-        HttpTask httpTask = new HttpTask(request);
-        httpTask.execute();
+        request.setTag(toString());
+    }
+    private void getContentByGet() {
+        String url = et_url.getText().toString();
+//        String url = "http://api.stay4it.com/v1/public/core/?service=user.login";
+//        String content = "account=stay4it&password=123456";
+        Request request = new Request(Request.Method.GET);
+        request.url = url;
+        request.setCallback(new StringCallback() {
+            @Override
+            public void onSuccess(String s) {
+                Logger.d(s);
+            }
+
+            @Override
+            public String preRequest() {
+                return super.preRequest();
+            }
+
+            @Override
+            public String postRequest(String s) {
+                return super.postRequest(s);
+            }
+
+            @Override
+            public void onFailure(CatException e) {
+
+            }
+        });
+        request.setTag(toString());
+        RequestManager.getInstance().performRequest(request);
     }
 
     private void getContentForDownload() {
 //        String url = et_url.getText().toString();
         String url = "http://sw.bos.baidu.com/sw-search-sp/software/7891170d89f61/npp_7.2.2_Installer.exe";
-        Request request = new Request(Request.Method.GET);
+        final Request request = new Request(Request.Method.GET);
         request.url = url;
         String cachePath = Environment.getExternalStorageDirectory() + File.separator + "download" + File.separator + "test.exe";
         request.setCallback(new FileCallback() {
@@ -124,12 +169,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void updateProgress(int currentLength, int totalLength) {
                 super.updateProgress(currentLength, totalLength);
                 Logger.d(currentLength + "/" + totalLength, totalLength + "");
+                if (currentLength*100f/totalLength>50){
+                    RequestManager.getInstance().cancelRequestForTag(request.tag,false);
+                }
 
             }
         }.setCachePath(cachePath).setProgressEnabled(true));
         request.setGlobalExceptionListener(this);
-        HttpTask httpTask = new HttpTask(request);
-        httpTask.execute();
+        request.setTag(toString());
+        RequestManager.getInstance().performRequest(request);
     }
 
     @Override
